@@ -4,7 +4,7 @@
 
 ### macOS 安装指南
 
-以下为 macOS 的安装过程，Windows 可以使用 whisper 与 speech_recognition 来替代下文中的 hear 与 say 指令。
+以下为 macOS 的安装过程，Windows 与 Linux 可以使用 speech_recognition 与 pyttsx3 来替代下文中的 macOS 的 hear 与 say 指令。
 
 #### 创建环境
 ```
