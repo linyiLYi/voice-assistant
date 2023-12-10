@@ -25,4 +25,4 @@ pip install pyaudio
 模型文件存放于  `models/` 文件夹下，在脚本中通过变量 `MODEL_PATH` 指定。
 推荐下载 TheBloke 的 gguf 格式模型：
 - [Yi-34B-Chat-GGUF](https://huggingface.co/TheBloke/Yi-34B-Chat-GGUF/blob/main/yi-34b-chat.Q8_0.gguf)
-- [Yi-6B-Chat-GGUF，适用小显存平台](https://huggingface.co/TheBloke/Yi-6B-GGUF/blob/main/yi-6b.Q8_0.gguf)
+- [Yi-6B-Chat-GGUF，适用小显存平台，尚未测试](https://huggingface.co/XeIaso/yi-chat-6B-GGUF/tree/main)
