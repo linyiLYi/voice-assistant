@@ -4,7 +4,7 @@
 
 ### macOS 安装指南
 
-以下为 macOS 的安装过程，Windows 与 Linux 可以使用 speech_recognition 与 pyttsx3 来替代 macOS 的 say 指令与基于 mlx 的 whisper。
+以下为 macOS 的安装过程，Windows 与 Linux 可以使用 speech_recognition 与 pyttsx3 来替代下文中的 macOS 的 hear/whisper 与 say 指令。
 
 #### 创建环境
 
@@ -18,6 +18,10 @@ CMAKE_ARGS="-DLLAMA_METAL=on" pip install llama-cpp-python
 brew install portaudio
 pip install pyaudio
 ```
+
+#### 安装 hear 语音识别模块
+
+从开源项目 [hear](https://github.com/sveinbjornt/hear) 中[下载安装包](https://sveinbjorn.org/files/software/hear.zip)，解压文件夹后运行`sudo bash install.sh`（需要管理员权限）。安装完成后可以直接通过控制台指令调用 macOS 的语音识别功能。注意要开启电脑设置里的键盘听写选项：设置 -> 键盘 -> 听写（开启开关）。在 macOS 上首次使用时还要在“设置 -> 隐私与安全性”允许 hear 模块运行。
 
 #### 模型文件
 模型文件存放于  `models/` 文件夹下，在脚本中通过变量 `MODEL_PATH` 指定。
