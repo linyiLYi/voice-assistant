@@ -13,8 +13,11 @@ import pyaudio
 import threading
 import queue
 from langchain.callbacks.base import BaseCallbackHandler, BaseCallbackManager
+import whisper
+from whisper import load_models
 
 # Configuration
+whisper_model = load_models.load_model("large-v2") # 加载语音识别模型
 MODEL_PATH = "models/yi-chat-6b.Q8_0.gguf" # models/yi-chat-6b.Q8_0.gguf, models/yi-34b-chat.Q8_0.gguf
 
 CHUNK = 1024
@@ -173,8 +176,8 @@ if __name__ == '__main__':
 
                 # -d device, -l language, -i input file, -p punctuation
                 time_ckpt = time.time()
-                user_input = subprocess.check_output(["hear", "-d", "-p", "-l", "zh-CN", "-i", "output.wav"]).decode("utf-8").strip()
-                
+                #user_input = subprocess.check_output(["hear", "-d", "-p", "-l", "zh-CN", "-i", "output.wav"]).decode("utf-8").strip()
+                user_input = whisper.transcribe("output.wav")["text"]
                 print("%s: %s (Time %d ms)" % (NAME, user_input, (time.time() - time_ckpt) * 1000))
             
             except subprocess.CalledProcessError:
