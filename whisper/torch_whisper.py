@@ -9,20 +9,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
-from torchaudio.transforms import MelScale, AmplitudeToDB
 
-# hard-coded audio hyperparameters
-SAMPLE_RATE = 16000
-N_FFT = 400
-N_MELS = 80
-HOP_LENGTH = 160
-CHUNK_LENGTH = 30
-N_SAMPLES = CHUNK_LENGTH * SAMPLE_RATE  # 480000 samples in a 30-second chunk
-N_FRAMES = N_SAMPLES // HOP_LENGTH  # 3000 frames in a mel spectrogram input
-
-N_SAMPLES_PER_TOKEN = HOP_LENGTH * 2  # the initial convolutions has stride 2
-FRAMES_PER_SECOND = SAMPLE_RATE // HOP_LENGTH  # 10ms per audio frame
-TOKENS_PER_SECOND = SAMPLE_RATE // N_SAMPLES_PER_TOKEN  # 20ms per audio token
 
 @dataclass
 class ModelDimensions:
@@ -247,7 +234,8 @@ class Whisper(nn.Module):
             self.dims.n_text_head,
             self.dims.n_text_layer,
         )
-        # use the last half layers for alignment by default; see `set_alignment_heads()` below
+        # use the last half among the decoder layers for time alignment by default;
+        # to use a specific set of heads, see `set_alignment_heads()` below.
         all_heads = torch.zeros(
             self.dims.n_text_layer, self.dims.n_text_head, dtype=torch.bool
         )
@@ -280,7 +268,11 @@ class Whisper(nn.Module):
 
     @property
     def is_multilingual(self):
-        return self.dims.n_vocab == 51865
+        return self.dims.n_vocab >= 51865
+
+    @property
+    def num_languages(self):
+        return self.dims.n_vocab - 51765 - int(self.is_multilingual)
 
     def install_kv_cache_hooks(self, cache: Optional[dict] = None):
         """
@@ -291,7 +283,7 @@ class Whisper(nn.Module):
 
         Returns
         -------
-        1ache : Dict[nn.Module, torch.Tensor]
+        cache : Dict[nn.Module, torch.Tensor]
             A dictionary object mapping the key/value projection modules to its cache
         hooks : List[RemovableHandle]
             List of PyTorch RemovableHandle objects to stop the hooks to be called
@@ -314,85 +306,3 @@ class Whisper(nn.Module):
 
         self.decoder.apply(install_hooks)
         return cache, hooks
-
-def log_mel_spectrogram_torch(audio, n_mels: int = N_MELS, padding: int = 0, sample_rate: int = 16000):
-    """
-    Compute the log-Mel spectrogram of the audio.
-
-    Parameters
-    ----------
-    audio : torch.Tensor or str
-        Audio tensor or path to audio file.
-
-    n_mels : int
-        Number of Mel-frequency bins.
-
-    padding : int
-        Number of zero samples to pad to the right.
-
-    sample_rate : int
-        Sample rate of the audio.
-
-    Returns
-    -------
-    torch.Tensor
-        Tensor containing the log-Mel spectrogram.
-    """
-    if isinstance(audio, str):
-        # Load audio file here using an appropriate function (e.g., torchaudio.load)
-        raise NotImplementedError("Audio loading not implemented.")
-    elif isinstance(audio, np.ndarray):
-        audio = torch.tensor(audio)
-
-    if padding > 0:
-        audio = torch.nn.functional.pad(audio, (0, padding))
-
-    # Define the window and compute STFT
-    window = torch.hann_window(N_FFT)
-    freqs = torch.stft(audio, n_fft=N_FFT, hop_length=HOP_LENGTH, win_length=N_FFT, window=window, return_complex=True)
-
-    # Compute magnitudes and apply Mel filter
-    magnitudes = torch.abs(freqs).pow(2)
-    mel_filter = MelScale(n_mels=n_mels, sample_rate=sample_rate, n_stft=N_FFT//2 + 1)
-    mel_spec = mel_filter(magnitudes)
-
-    # Convert to decibels
-    log_mel_spec = AmplitudeToDB(stype='power')(mel_spec)
-
-    return log_mel_spec
-
-def pad_or_trim_torch(array, length: int = N_SAMPLES, axis: int = -1):
-    """
-    Pad or trim the audio array to the specified length.
-
-    Parameters
-    ----------
-    array : torch.Tensor
-        The audio tensor.
-
-    length : int
-        Length to which the tensor will be padded or trimmed.
-
-    axis : int
-        Axis along which padding/trimming is to be performed.
-
-    Returns
-    -------
-    torch.Tensor
-        Padded or trimmed tensor.
-    """
-    if isinstance(array, np.ndarray):
-        array = torch.tensor(array)  # Convert numpy array to torch tensor
-
-    if array.shape[axis] > length:
-        sl = [slice(None)] * array.ndim
-        sl[axis] = slice(0, length)
-        array = array[tuple(sl)]
-
-    if array.shape[axis] < length:
-        pad_size = length - array.shape[axis]
-        pad = [0, 0] * array.ndim
-        pad[-1] = pad_size  # Pad on the last dimension
-        array = torch.nn.functional.pad(array, pad)
-
-    return array
