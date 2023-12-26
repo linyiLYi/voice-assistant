@@ -1,6 +1,6 @@
 # 语音助手
 
-一个简单的 Python 脚本，可以通过语音与本地大语言模型进行对话。本项目中 whisper 实现来自 mlx [官方示例库](https://github.com/ml-explore/mlx-examples/tree/main/whisper)。
+一个简单的 Python 脚本，可以通过语音与本地大语言模型进行对话。本项目中 whisper 实现来自 mlx [官方示例库](https://github.com/ml-explore/mlx-examples/tree/main/whisper)。大语言模型为[零一万物](https://www.lingyiwanwu.com)的 Yi 模型，其中 Yi-34B-Chat 能力更强，显存空间允许的条件下推荐使用。
 
 ### macOS 安装指南
 
