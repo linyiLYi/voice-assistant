@@ -16,6 +16,7 @@ CMAKE_ARGS="-DLLAMA_METAL=on" pip install llama-cpp-python
 
 # Install audio processing tools
 ```
+brew install ffmpeg
 brew install portaudio
 pip install pyaudio
 ```

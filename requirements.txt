@@ -3,6 +3,7 @@ torchvision
 torchaudio
 mlx
 langchain
+langchain-community
 numba
 numpy
 torch
