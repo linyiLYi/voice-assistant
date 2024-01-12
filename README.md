@@ -1,30 +1,30 @@
-# 语音助手
+# Voice-Assistant
 
-一个简单的 Python 脚本，可以通过语音与本地大语言模型进行对话。本项目中 whisper 实现来自 mlx [官方示例库](https://github.com/ml-explore/mlx-examples/tree/main/whisper)。大语言模型为[零一万物](https://www.lingyiwanwu.com)的 Yi 模型，其中 Yi-34B-Chat 能力更强，显存空间允许的条件下推荐使用。
+A simple Python script that allows for voice interaction with a local large language model. In this project, the whisper implementation comes from the official mlx example library. The large language model is the Yi model from Zero Yiwu, where the Yi-34B-Chat has stronger capabilities and is recommended for use when memory space allows.
 
-### macOS 安装指南
+### macOS Installation Guide
 
-以下为 macOS 的安装过程，Windows 与 Linux 可以使用 speech_recognition 与 pyttsx3 来替代下文中的 macOS 的 hear/whisper 与 say 指令。
+The following is the installation process for macOS. Windows and Linux can use speech_recognition and pyttsx3 to replace the hear/whisper and say commands in macOS.
 
-#### 创建环境
-
+### Creating an Environment
 ```
 conda create -n VoiceAI python=3.11
 conda activate VoiceAI
 pip install -r requirements.txt
 CMAKE_ARGS="-DLLAMA_METAL=on" pip install llama-cpp-python
+```
 
-# 安装音频处理工具
+# Install audio processing tools
+```
+brew install ffmpeg
 brew install portaudio
 pip install pyaudio
 ```
 
-#### 安装 hear 语音识别模块
+#### Installing the hear Voice Recognition Module
 
-从开源项目 [hear](https://github.com/sveinbjornt/hear) 中[下载安装包](https://sveinbjorn.org/files/software/hear.zip)，解压文件夹后运行`sudo bash install.sh`（需要管理员权限）。安装完成后可以直接通过控制台指令调用 macOS 的语音识别功能。注意要开启电脑设置里的键盘听写选项：设置 -> 键盘 -> 听写（开启开关）。在 macOS 上首次使用时还要在“设置 -> 隐私与安全性”允许 hear 模块运行。
+Download the installation package from the open-source [hear](https://github.com/sveinbjornt/hear) project, unzip the [folder](https://sveinbjorn.org/files/software/hear.zip), and run sudo bash install.sh (administrator rights required). After installation, you can directly use the voice recognition function of macOS through console commands. Note that you need to enable the dictation option in computer settings: Settings -> Keyboard -> Dictation (turn on the switch). The first time you use it on macOS, you also need to allow the hear module to run in "Settings -> Privacy & Security".
 
-#### 模型文件
-模型文件存放于  `models/` 文件夹下，在脚本中通过变量 `MODEL_PATH` 指定。
-推荐下载 TheBloke 与 XeIaso 的 gguf 格式模型，其中 6B 模型显存占用更小：
-- [TheBloke/Yi-34B-Chat-GGUF](https://huggingface.co/TheBloke/Yi-34B-Chat-GGUF/blob/main/yi-34b-chat.Q8_0.gguf)
-- [XeIaso/Yi-6B-Chat-GGUF](https://huggingface.co/XeIaso/yi-chat-6B-GGUF/blob/main/yi-chat-6b.Q8_0.gguf)
+#### Model Files
+
+Model files are stored in the models/ folder and specified in the script through the MODEL_PATH variable. It is recommended to download TheBloke and XeIaso's gguf format models, among which the 6B model occupies less memory.

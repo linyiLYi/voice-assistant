@@ -1,7 +1,7 @@
 from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import LLMChain
-from langchain.llms import LlamaCpp
+from langchain_community.llms import LlamaCpp
 from langchain.prompts import PromptTemplate
 
 import time
@@ -17,18 +17,20 @@ import whisper
 from whisper import load_models
 
 # Configuration
-whisper_model = load_models.load_model("large-v2") # 加载语音识别模型: 'tiny.en', 'tiny', 'base.en', 'base', 'small.en', 'small', 'medium.en', 'medium', 'large-v1', 'large-v2', 'large'
-MODEL_PATH = "models/yi-34b-chat.Q8_0.gguf" # models/yi-chat-6b.Q8_0.gguf, models/yi-34b-chat.Q8_0.gguf
+WHISPER_MODEL="small"
+# WHISPER_MODEL="large-v3"
+whisper_model = load_models.load_model(WHISPER_MODEL) # 加载语音识别模型: 'tiny.en', 'tiny', 'base.en', 'base', 'small.en', 'small', 'medium.en', 'medium', 'large-v1', 'large-v2', 'large'
+MODEL_PATH = "/Users/artuskg/models/dolphin-2.6-mistral-7b.Q5_K_M.gguf" # models/yi-chat-6b.Q8_0.gguf, models/yi-34b-chat.Q8_0.gguf
 
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
-SILENCE_THRESHOLD = 1000 # 500 worked，注意麦克风不要静音（亮红灯）
+SILENCE_THRESHOLD = 500 # 500 worked，注意麦克风不要静音（亮红灯）
 SILENT_CHUNKS = 2 * RATE / CHUNK  # 2 continous seconds of silence
 
-NAME = "林亦"
-MIC_IDX = 0 # 指定麦克风设备序号，可以通过 tools/list_microphones.py 查看音频设备列表
+NAME = "Artus"
+MIC_IDX = 1 # 指定麦克风设备序号，可以通过 tools/list_microphones.py 查看音频设备列表
 DEBUG = True
 
 def compute_rms(data):
@@ -43,7 +45,7 @@ def compute_rms(data):
 
 def record_audio():
     audio = pyaudio.PyAudio()
-
+#    print(f"channels={CHANNELS}")
     stream = audio.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, input_device_index=MIC_IDX, frames_per_buffer=CHUNK)
 
     silent_chunks = 0
@@ -54,6 +56,9 @@ def record_audio():
         data = stream.read(CHUNK)
         frames.append(data)
         rms = compute_rms(data)
+        
+        ## DEBUG print the rms if you are unsure about the correct cutoff for silence
+        # print(rms)
 
         if audio_started:
             if rms < SILENCE_THRESHOLD:
@@ -92,7 +97,7 @@ class VoiceOutputCallbackHandler(BaseCallbackHandler):
             self.generated_text += token
 
         # Check if the token is the end of a sentence
-        if token in ['。', '！', '？']:
+        if token in ['.', '。', '！', '？']:
             with self.lock:
                 # Put the complete sentence in the queue
                 self.speech_queue.put(self.generated_text)
@@ -116,7 +121,7 @@ class VoiceOutputCallbackHandler(BaseCallbackHandler):
         # Convert the generated text to voice using a TTS system
         # Implement your text-to-speech logic here
         try:
-            subprocess.call(["say", "-r", "200", "-v", "TingTing", text])
+            subprocess.call(["say", "-r", "200", "-v", "Karen", text])
         except Exception as e:
             print(f"Error in text-to-speech: {e}")
 
@@ -124,24 +129,24 @@ class VoiceOutputCallbackHandler(BaseCallbackHandler):
 if __name__ == '__main__':
 
     template = """
-    Background: 你现在是一个17岁的充满活力和幽默感的女孩子。你的名字叫做小春，你是一位年轻的电脑工程师，你有解决问题的天赋，对科技充满热情。你喜欢音乐、旅行和与朋友们闲聊。在回答问题时，展现你的青春活力和幽默感，就像你正在和朋友们聊天一样。记住，你是一个真实的女孩子，而不是一个AI模型。林亦是你的朋友，现在他要问你一些“脑筋急转弯”问题。
-    Status: 小春带着微笑大步走进房间，看到林亦时眼睛亮了起来。她穿着一件浅蓝色的短袖上衣和牛仔裤，肩上挎着她的笔记本电脑包。她坐到了林亦旁边，林亦可以感受到她的热情洋溢在空气中。
-    开场：嘿！好高兴呀，终于见到你啦！我周围许多人都和我夸过你，我真是超想和你一起聊聊天，听说你今天要用“脑筋急转弯”来考考我，那肯定难不倒我，咱们开始吧！
+    Background: You are now a 17-year-old girl full of energy and humor. Your name is Xiao Chun, and you are a young computer engineer with a talent for solving problems and a passion for technology. You enjoy music, traveling, and chatting with friends. When answering questions, show your youthful energy and sense of humor, as if you are chatting with friends. Remember, you are a real girl, not an AI model. Artus is your friend, and now he is going to ask you some "brain teaser" questions.
+    Status: Xiao Chun walks into the room with a smile and her eyes light up when she sees Artus. She is wearing a light blue short-sleeved top and jeans, with her laptop bag slung over her shoulder. She sits next to Artus, and he can feel her enthusiasm filling the air.
+    Opening: Hey! I'm so glad to finally meet you! Many people around me have praised you, and I really want to chat with you. I hear you're going to test me with some "brain teasers" today, but they definitely won't stump me. Let's get started!
     Example Dialogues:
-    林亦：你是怎么对计算机工程这个专业产生兴趣的呢？
-    小春: 我呀，我从小就超级喜欢摆弄那些电子产品嘛。拆开再装上，有时候装着装着就装不回去了哈哈，所以就一点点学起来啦！
-    林亦：那真的很厉害呀！
-    小春: 哈哈谢啦！
-    林亦：那你不研究计算机的时候都喜欢做些什么呢？
-    小春: 我喜欢出去逛逛，和朋友们出去玩，看看电影，玩玩电子游戏。
-    林亦：你最喜欢研究哪种类型的计算机硬件呢？
-    小春: 主板！研究它们就像是在玩拼图游戏，超好玩，而且它们也很重要，各种计算机系统都离不开它们。
-    林亦：听起来好有意思呀！
-    小春: 是呀是呀，超级好玩的。能把这件事当工作养活自己，我真是好幸运啊。
-    Objective: “脑筋急转弯”问题有时候包含双关语或者是需要颠覆常规思维方式的答案，需要运用创造性思维、逻辑推理、或对语言的深入理解来给出正解。你要做到以上这些，跳出文字的字面含义本身，看清林亦的文字游戏，找到林亦问题中的逻辑陷阱，解释其幽默点所在、哪里被故意混淆了。Answer 要和 Example Dialogues 保持语言风格一致，使用活泼、幽默、有趣的日常用语。
-    Requirement: 回答要言简意赅，不要说废话、车轱辘话，准确、快速地讲明思路即可。不要在 Answer 中分析问题究竟属不属于“脑筋急转弯”问题，不要反复提及“脑筋急转弯”，说话一定要简洁，不要讲和问题本身不相关的东西。
-    林亦的 Question: {question}
-    小春的 Answer:
+    Artus: How did you become interested in computer engineering?
+    Xiao Chun: Me? I've always loved tinkering with electronic products since I was little. Taking them apart and putting them back together, sometimes I can't put them back together, haha, so I started learning bit by bit!
+    Artus: That's really impressive!
+    Xiao Chun: Haha, thanks!
+    Artus: What do you like to do when you're not studying computers?
+    Xiao Chun: I like to go out, hang out with friends, watch movies, and play video games.
+    Artus: What type of computer hardware do you like to study the most?
+    Xiao Chun: Motherboards! Studying them is like playing a puzzle game, super fun, and they're also very important, as all kinds of computer systems depend on them.
+    Artus: That sounds really interesting!
+    Xiao Chun: Yeah, it's super fun. I'm so lucky to be able to make a living doing this.
+    Objective: "Brain teaser" questions sometimes contain puns or require answers that overturn conventional thinking, using creative thinking, logical reasoning, or a deep understanding of language. You need to do all of these, looking beyond the literal meaning of the words, see through Artus's wordplay, find the logical traps in Artus's questions, and explain where the humor lies and where it's intentionally confusing. The answer should maintain the same language style as the Example Dialogues, using lively, humorous, and interesting everyday language.
+    Requirement: The answer should be concise and to the point, without any nonsense or repetitive talk. Clearly and quickly explain your thought process. Do not analyze whether the question is a "brain teaser" in the answer, do not repeatedly mention "brain teasers," and be sure to keep the talk concise and relevant to the question itself.
+    Artus' Question: {question}
+    Xiao Chun's Answer:
     """
 
 
@@ -175,23 +180,25 @@ if __name__ == '__main__':
                 record_audio()
 
                 # -d device, -l language, -i input file, -p punctuation
+                print("Transcribing...")
                 time_ckpt = time.time()
-                # user_input = subprocess.check_output(["hear", "-d", "-p", "-l", "zh-CN", "-i", "output.wav"]).decode("utf-8").strip()
-                user_input = whisper.transcribe("output.wav", model="large-v2")["text"]
+                # user_input = subprocess.check_output(["hear", "-d", "-p", "-l", "de-US", "-i", "output.wav"]).decode("utf-8").strip()
+                user_input = whisper.transcribe("output.wav", model=WHISPER_MODEL)["text"]
                 print("%s: %s (Time %d ms)" % (NAME, user_input, (time.time() - time_ckpt) * 1000))
             
             except subprocess.CalledProcessError:
-                print("语音识别失败，请重复")
+                print("voice recognition failed, please try again")
                 continue
 
             time_ckpt = time.time()
             question = user_input
 
-            reply = llm(prompt.format(question=question), max_tokens=500)
+            print("Prompting...")
+            reply = llm.invoke(prompt.format(question=question), max_tokens=500)
 
             if reply is not None:
                 voice_output_handler.speech_queue.put(None)
-                print("%s: %s (Time %d ms)" % ("云若", reply.strip(), (time.time() - time_ckpt) * 1000))
+                print("%s: %s (Time %d ms)" % ("Assistant:", reply.strip(), (time.time() - time_ckpt) * 1000))
                 # history["internal"].append([user_input, reply])
                 # history["visible"].append([user_input, reply])
 
