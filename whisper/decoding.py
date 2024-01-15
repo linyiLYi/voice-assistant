@@ -1,12 +1,13 @@
 # Copyright © 2023 Apple Inc.
 
+import zlib
 from dataclasses import dataclass, field, replace
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
+
 import mlx.core as mx
-from mlx.utils import tree_map
 import mlx.nn as nn
 import numpy as np
-import zlib
+from mlx.utils import tree_map
 
 from .audio import CHUNK_LENGTH
 from .tokenizer import Tokenizer, get_tokenizer
@@ -112,7 +113,7 @@ class DecodingOptions:
     max_initial_timestamp: Optional[float] = 1.0
 
     # implementation details
-    fp16: bool = True # use fp16 for most of the calculation
+    fp16: bool = True  # use fp16 for most of the calculation
 
 
 @dataclass(frozen=True)
@@ -140,7 +141,7 @@ class Inference:
             # only need to use the last token except in the first forward pass
             tokens = tokens[:, -1:]
 
-        logits, self.kv_cache = self.model.decoder(
+        logits, self.kv_cache, _ = self.model.decoder(
             tokens, audio_features, kv_cache=self.kv_cache
         )
         return logits.astype(mx.float32)
